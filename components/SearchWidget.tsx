@@ -138,6 +138,9 @@ export default function SearchWidget() {
   const [resultMaxPrice, setResultMaxPrice]       = useState(0);
   const [resultStores, setResultStores]           = useState<Set<string>>(new Set());
 
+  // Mobile filter drawer state (shared — only one phase shows at a time)
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
 
   function toggleService(id: string) {
     // Deactivate tires when a labor service is selected
@@ -439,15 +442,41 @@ export default function SearchWidget() {
             </p>
           </div>
 
+          {/* Mobile filter toggle */}
+          <div className="flex items-center gap-3 mb-3 lg:hidden">
+            <button
+              onClick={() => setShowMobileFilters((p) => !p)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${showMobileFilters ? "bg-[#f97316] border-[#f97316] text-white" : "bg-white border-[#e5e5ea] text-[#1d1d1f]"}`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h18M6 8h12M9 12h6M11 16h2" />
+              </svg>
+              Filters
+              {activeFilterCount > 0 && (
+                <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${showMobileFilters ? "bg-white text-[#f97316]" : "bg-[#f97316] text-white"}`}>
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+            {activeFilterCount > 0 && (
+              <button
+                onClick={() => { setFilterOpenNow(false); setFilterVerified(false); setFilterMinRating(0); setFilterMaxInstall(0); setFilterMaxAlignment(0); setFilterMaxRotation(0); setFilterMaxBalancing(0); setFilterMaxMiles(15); }}
+                className="text-sm font-semibold text-red-400"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+
           {/* Two-column layout */}
-          <div className="flex gap-6 items-start">
+          <div className="lg:flex lg:gap-6 lg:items-start">
 
             {/* ── Left filter panel ── */}
-            <div className="w-72 shrink-0 space-y-4 sticky top-24">
+            <div className={`${showMobileFilters ? "block" : "hidden"} lg:block w-full lg:w-72 lg:shrink-0 lg:sticky lg:top-24 mb-4 lg:mb-0`}>
 
               {/* Filters */}
               <div className="bg-white rounded-2xl border border-[#e5e5ea] shadow-sm p-4 space-y-5">
-                <div className="flex items-center justify-between">
+                <div className="hidden lg:flex items-center justify-between">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-[#6e6e73]">Filters</p>
                   {activeFilterCount > 0 && (
                     <button
@@ -574,7 +603,7 @@ export default function SearchWidget() {
                 </div>
               ) : (
                 <>
-                  <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                     {filteredShops.slice(0, visibleCount).map((shop, idx) => {
                       const miles = (shop.distanceMeters / 1609.34).toFixed(1);
                       const quoteQuery = new URLSearchParams({ placeId: shop.placeId, name: shop.name, address: shop.address });
@@ -771,6 +800,29 @@ export default function SearchWidget() {
             </button>
           </div>
 
+          {/* Mobile filter toggle */}
+          {results.length > 0 && (
+            <div className="flex items-center gap-3 mb-3 lg:hidden">
+              <button
+                onClick={() => setShowMobileFilters((p) => !p)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${showMobileFilters ? "bg-[#f97316] border-[#f97316] text-white" : "bg-white border-[#e5e5ea] text-[#1d1d1f]"}`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h18M6 8h12M9 12h6M11 16h2" />
+                </svg>
+                Filters
+                {activeResultFilterCount > 0 && (
+                  <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${showMobileFilters ? "bg-white text-[#f97316]" : "bg-[#f97316] text-white"}`}>
+                    {activeResultFilterCount}
+                  </span>
+                )}
+              </button>
+              {activeResultFilterCount > 0 && (
+                <button onClick={clearResultFilters} className="text-sm font-semibold text-red-400">Clear all</button>
+              )}
+            </div>
+          )}
+
           {results.length === 0 ? (
             <div className="bg-white rounded-3xl border border-[#d2d2d7] px-10 py-14 text-center shadow-sm">
               <div className="w-16 h-16 bg-[#f5f5f7] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -787,14 +839,14 @@ export default function SearchWidget() {
               </button>
             </div>
           ) : (
-            <div className="flex gap-6 items-start">
+            <div className="lg:flex lg:gap-6 lg:items-start">
 
               {/* ── Left filter panel ── */}
-              <div className="w-64 shrink-0 space-y-4 sticky top-24">
+              <div className={`${showMobileFilters ? "block" : "hidden"} lg:block w-full lg:w-64 lg:shrink-0 lg:sticky lg:top-24 mb-4 lg:mb-0`}>
                 <div className="bg-white rounded-2xl border border-[#e5e5ea] shadow-sm p-4 space-y-5">
 
-                  {/* Header */}
-                  <div className="flex items-center justify-between">
+                  {/* Header — desktop only */}
+                  <div className="hidden lg:flex items-center justify-between">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-[#6e6e73]">Filters</p>
                     {activeResultFilterCount > 0 && (
                       <button onClick={clearResultFilters} className="text-[11px] font-semibold text-red-400 hover:text-red-500 transition-colors">
@@ -912,7 +964,7 @@ export default function SearchWidget() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                       {filteredResults.map((r, idx) => {
                         const meta = STORE_META[r.storeBrand] ?? { color: "#6e6e73", bg: "#f5f5f7", abbr: "?" };
                         const isBest = resultSortBy === "price" && idx === 0;
@@ -1119,7 +1171,7 @@ export default function SearchWidget() {
           </div>
 
           {/* Two columns */}
-          <div className="grid sm:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
             {/* ── Left: Tires ── */}
             <div className={`bg-white rounded-3xl border-2 transition-all duration-300 overflow-hidden ${tireActive ? "border-[#f97316] shadow-lg shadow-orange-100" : "border-[#e5e5ea] shadow-sm"}`}>
