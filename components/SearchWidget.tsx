@@ -132,6 +132,12 @@ export default function SearchWidget() {
   const [filterMaxBalancing, setFilterMaxBalancing] = useState(0);
   const [filterMaxMiles, setFilterMaxMiles]         = useState(15);
 
+  // Results filter state
+  const [resultSortBy, setResultSortBy]         = useState<"price" | "store">("price");
+  const [resultInStockOnly, setResultInStockOnly] = useState(false);
+  const [resultMaxPrice, setResultMaxPrice]       = useState(0);
+  const [resultStores, setResultStores]           = useState<Set<string>>(new Set());
+
 
   function toggleService(id: string) {
     // Deactivate tires when a labor service is selected
@@ -263,6 +269,10 @@ export default function SearchWidget() {
     setFilterMaxRotation(0);
     setFilterMaxBalancing(0);
     setFilterMaxMiles(15);
+    setResultSortBy("price");
+    setResultInStockOnly(false);
+    setResultMaxPrice(0);
+    setResultStores(new Set());
   }
 
   function handleUseCurrentLocation() {
@@ -698,12 +708,45 @@ export default function SearchWidget() {
 
   /* ─────────────────────────────── RESULTS ─────────────────────────────── */
   if (phase === "results") {
+    const validResults = results.filter((r) => r.tirePrice > 5);
+    const allStoreNames = Array.from(new Set(validResults.map((r) => r.store))).sort();
+    const maxPossiblePrice = Math.ceil(Math.max(...validResults.map((r) => r.total), 0));
+
+    const activeResultFilterCount =
+      (resultInStockOnly ? 1 : 0) +
+      (resultMaxPrice > 0 ? 1 : 0) +
+      (resultStores.size > 0 ? 1 : 0);
+
+    const filteredResults = validResults
+      .filter((r) => {
+        if (resultInStockOnly && !r.inStock) return false;
+        if (resultMaxPrice > 0 && r.total > resultMaxPrice) return false;
+        if (resultStores.size > 0 && !resultStores.has(r.store)) return false;
+        return true;
+      })
+      .slice()
+      .sort((a, b) => resultSortBy === "store" ? a.store.localeCompare(b.store) : a.total - b.total);
+
+    function clearResultFilters() {
+      setResultInStockOnly(false);
+      setResultMaxPrice(0);
+      setResultStores(new Set());
+    }
+
+    function toggleResultStore(store: string) {
+      setResultStores((prev) => {
+        const next = new Set(prev);
+        next.has(store) ? next.delete(store) : next.add(store);
+        return next;
+      });
+    }
+
     return (
-      <section id="search" className="py-24 bg-[#f5f5f7]">
-        <div className="max-w-5xl mx-auto px-5 sm:px-8">
+      <section id="search" className="pt-6 pb-12 bg-[#f5f5f7]">
+        <div className="max-w-[1400px] mx-auto px-5 sm:px-8">
 
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <p className="text-xs font-semibold tracking-widest uppercase text-[#6e6e73] mb-1">Price Comparison</p>
               <h2 className="text-3xl font-bold text-[#1d1d1f]">
@@ -712,7 +755,9 @@ export default function SearchWidget() {
               </h2>
               <p className="text-sm text-[#6e6e73] mt-1">
                 Near <span className="font-semibold text-[#1d1d1f]">{searchMeta?.location}</span>
-                {" · "}{results.length} store{results.length !== 1 ? "s" : ""} found
+                {" · "}
+                <span className="font-semibold text-[#f97316]">{filteredResults.length}</span>
+                {filteredResults.length !== validResults.length ? ` of ${validResults.length}` : ""} result{validResults.length !== 1 ? "s" : ""}
               </p>
             </div>
             <button
@@ -742,108 +787,225 @@ export default function SearchWidget() {
               </button>
             </div>
           ) : (
-            <>
-              {/* Sort note */}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {results
-                  .filter((r) => r.tirePrice > 5)
-                  .slice()
-                  .sort((a, b) => a.total - b.total)
-                  .map((r, idx) => {
-                    const meta = STORE_META[r.storeBrand] ?? { color: "#6e6e73", bg: "#f5f5f7", abbr: "?" };
-                    const isBest = idx === 0;
-                    return (
+            <div className="flex gap-6 items-start">
+
+              {/* ── Left filter panel ── */}
+              <div className="w-64 shrink-0 space-y-4 sticky top-24">
+                <div className="bg-white rounded-2xl border border-[#e5e5ea] shadow-sm p-4 space-y-5">
+
+                  {/* Header */}
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-[#6e6e73]">Filters</p>
+                    {activeResultFilterCount > 0 && (
+                      <button onClick={clearResultFilters} className="text-[11px] font-semibold text-red-400 hover:text-red-500 transition-colors">
+                        Clear all
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Sort */}
+                  <div>
+                    <p className="text-[12px] font-semibold text-[#1d1d1f] mb-2">Sort By</p>
+                    <div className="flex rounded-xl bg-[#f5f5f7] p-1 gap-1">
+                      {([["price", "Lowest Price"], ["store", "Store A–Z"]] as const).map(([val, label]) => (
+                        <button
+                          key={val}
+                          onClick={() => setResultSortBy(val)}
+                          className={`flex-1 py-1.5 rounded-lg text-[12px] font-semibold transition-all ${resultSortBy === val ? "bg-white text-[#f97316] shadow-sm border border-[#e5e5ea]" : "text-[#6e6e73] hover:text-[#1d1d1f]"}`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* In Stock */}
+                  <div>
+                    <p className="text-[12px] font-semibold text-[#1d1d1f] mb-2">Availability</p>
+                    <label className="flex items-center gap-2.5 cursor-pointer group">
                       <div
-                        key={r.store + idx}
-                        className={`relative bg-white rounded-3xl border-2 flex flex-col transition-all duration-200 hover:shadow-xl hover:shadow-black/8 hover:-translate-y-0.5 ${
-                          isBest ? "border-[#f97316] shadow-lg shadow-orange-100" : "border-[#e5e5ea] shadow-sm"
-                        }`}
+                        onClick={() => setResultInStockOnly(!resultInStockOnly)}
+                        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${resultInStockOnly ? "bg-[#f97316] border-[#f97316]" : "border-[#d2d2d7] group-hover:border-[#f97316]/60"}`}
                       >
-                        {isBest && (
-                          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#f97316] text-white text-[11px] font-bold px-3.5 py-1 rounded-full shadow-sm whitespace-nowrap">
-                            BEST PRICE
-                          </div>
-                        )}
-
-                        <div className="p-6 flex-1 flex flex-col">
-                          {/* Store badge */}
-                          <div className="flex items-center gap-3 mb-5">
-                            <div
-                              className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg shrink-0"
-                              style={{ backgroundColor: meta.color }}
-                            >
-                              {meta.abbr}
-                            </div>
-                            <div>
-                              <p className="font-bold text-[#1d1d1f] text-base">{r.store}</p>
-                              {r.inStock ? (
-                                <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">In Stock</span>
-                              ) : (
-                                <span className="text-xs font-semibold text-[#a1a1a6] bg-[#f5f5f7] px-2 py-0.5 rounded-full">Check Availability</span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Tire name */}
-                          <p className="text-[13px] text-[#6e6e73] leading-snug mb-5 min-h-[2.5rem]">{r.tireName}</p>
-
-                          {/* Price breakdown */}
-                          <div className="bg-[#f5f5f7] rounded-2xl p-4 mb-5 space-y-2.5">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-[#6e6e73]">Tire price</span>
-                              <span className="text-sm font-semibold text-[#1d1d1f]">${r.tirePrice.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-[#6e6e73]">Installation</span>
-                              <span className="text-sm font-semibold text-[#1d1d1f]">
-                                {r.installPrice != null ? `$${r.installPrice.toFixed(2)}` : "—"}
-                              </span>
-                            </div>
-                            <div className="border-t border-[#e5e5ea] pt-2.5 flex justify-between items-center">
-                              <span className="text-sm font-bold text-[#1d1d1f]">Total / tire</span>
-                              <span className="text-lg font-black" style={{ color: isBest ? "#f97316" : "#1d1d1f" }}>
-                                ${r.total.toFixed(2)}
-                              </span>
-                            </div>
-                          </div>
-
-                          {r.note && (
-                            <p className="text-[11px] text-[#a1a1a6] mb-4 flex items-start gap-1.5">
-                              <svg className="w-3 h-3 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                              </svg>
-                              {r.note}
-                            </p>
-                          )}
-
-                          {/* CTA */}
-                          <a
-                            href={r.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`mt-auto flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-bold transition-all duration-200 active:scale-95 ${
-                              isBest
-                                ? "bg-[#f97316] hover:bg-[#ea6b0f] text-white shadow-sm hover:shadow-md hover:shadow-[#f97316]/30"
-                                : "bg-[#1d1d1f] hover:bg-[#2d2d2f] text-white"
-                            }`}
-                          >
-                            View Deal
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          </a>
-                        </div>
+                        {resultInStockOnly && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                       </div>
-                    );
-                  })}
+                      <span className="text-[13px] text-[#1d1d1f]" onClick={() => setResultInStockOnly(!resultInStockOnly)}>In Stock Only</span>
+                    </label>
+                  </div>
+
+                  {/* Max Price */}
+                  {maxPossiblePrice > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-[12px] font-semibold text-[#1d1d1f]">Max Price / Tire</p>
+                        <span className="text-[12px] font-bold text-[#f97316]">
+                          {resultMaxPrice === 0 ? "Any" : `$${resultMaxPrice}`}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={maxPossiblePrice}
+                        step={5}
+                        value={resultMaxPrice === 0 ? maxPossiblePrice : resultMaxPrice}
+                        onChange={(e) => {
+                          const v = Number(e.target.value);
+                          setResultMaxPrice(v >= maxPossiblePrice ? 0 : v);
+                        }}
+                        className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-[#f97316] bg-[#e5e5ea]"
+                        style={{
+                          background: `linear-gradient(to right, #f97316 ${(((resultMaxPrice === 0 ? maxPossiblePrice : resultMaxPrice)) / maxPossiblePrice) * 100}%, #e5e5ea ${(((resultMaxPrice === 0 ? maxPossiblePrice : resultMaxPrice)) / maxPossiblePrice) * 100}%)`
+                        }}
+                        suppressHydrationWarning
+                      />
+                      <div className="flex justify-between mt-1">
+                        <span className="text-[10px] text-[#a1a1a6]">$0</span>
+                        <span className="text-[10px] text-[#a1a1a6]">${maxPossiblePrice}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Store filter */}
+                  {allStoreNames.length > 1 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-[12px] font-semibold text-[#1d1d1f]">Stores</p>
+                        {resultStores.size > 0 && (
+                          <button onClick={() => setResultStores(new Set())} className="text-[11px] text-[#a1a1a6] hover:text-[#6e6e73] transition-colors">
+                            All
+                          </button>
+                        )}
+                      </div>
+                      <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                        {allStoreNames.map((store) => {
+                          const checked = resultStores.size === 0 || resultStores.has(store);
+                          return (
+                            <label key={store} className="flex items-center gap-2.5 cursor-pointer group">
+                              <div
+                                onClick={() => toggleResultStore(store)}
+                                className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${checked && resultStores.size > 0 ? "bg-[#f97316] border-[#f97316]" : resultStores.size === 0 ? "border-[#d2d2d7] bg-white" : "border-[#d2d2d7] group-hover:border-[#f97316]/60"}`}
+                              >
+                                {checked && resultStores.size > 0 && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                              </div>
+                              <span className="text-[12px] text-[#1d1d1f] truncate" onClick={() => toggleResultStore(store)}>{store}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeResultFilterCount > 0 && (
+                    <p className="text-[11px] text-[#a1a1a6] text-center pt-1">
+                      {activeResultFilterCount} filter{activeResultFilterCount !== 1 ? "s" : ""} active
+                    </p>
+                  )}
+                </div>
               </div>
 
-              {/* Disclaimer */}
-              <p className="mt-6 text-center text-[12px] text-[#a1a1a6] max-w-lg mx-auto leading-relaxed">
-                Prices are retrieved in real-time by AI and may differ from in-store pricing. Always confirm with the retailer before purchasing.
-                Installation fees are per tire and may vary by location.
-              </p>
-            </>
+              {/* ── Right: result cards ── */}
+              <div className="flex-1 min-w-0">
+                {filteredResults.length === 0 ? (
+                  <div className="bg-white rounded-3xl border border-[#d2d2d7] px-10 py-14 text-center shadow-sm">
+                    <p className="text-xl font-bold text-[#1d1d1f] mb-2">No results match your filters</p>
+                    <button onClick={clearResultFilters} className="text-sm font-semibold text-[#f97316] hover:text-[#ea6b0f] transition-colors">Clear all filters</button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                      {filteredResults.map((r, idx) => {
+                        const meta = STORE_META[r.storeBrand] ?? { color: "#6e6e73", bg: "#f5f5f7", abbr: "?" };
+                        const isBest = resultSortBy === "price" && idx === 0;
+                        return (
+                          <div
+                            key={r.store + idx}
+                            className={`relative bg-white rounded-3xl border-2 flex flex-col transition-all duration-200 hover:shadow-xl hover:shadow-black/8 hover:-translate-y-0.5 ${
+                              isBest ? "border-[#f97316] shadow-lg shadow-orange-100" : "border-[#e5e5ea] shadow-sm"
+                            }`}
+                          >
+                            {isBest && (
+                              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#f97316] text-white text-[11px] font-bold px-3.5 py-1 rounded-full shadow-sm whitespace-nowrap">
+                                BEST PRICE
+                              </div>
+                            )}
+
+                            <div className="p-6 flex-1 flex flex-col">
+                              <div className="flex items-center gap-3 mb-5">
+                                <div
+                                  className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg shrink-0"
+                                  style={{ backgroundColor: meta.color }}
+                                >
+                                  {meta.abbr}
+                                </div>
+                                <div>
+                                  <p className="font-bold text-[#1d1d1f] text-base">{r.store}</p>
+                                  {r.inStock ? (
+                                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">In Stock</span>
+                                  ) : (
+                                    <span className="text-xs font-semibold text-[#a1a1a6] bg-[#f5f5f7] px-2 py-0.5 rounded-full">Check Availability</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <p className="text-[13px] text-[#6e6e73] leading-snug mb-5 min-h-[2.5rem]">{r.tireName}</p>
+
+                              <div className="bg-[#f5f5f7] rounded-2xl p-4 mb-5 space-y-2.5">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm text-[#6e6e73]">Tire price</span>
+                                  <span className="text-sm font-semibold text-[#1d1d1f]">${r.tirePrice.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm text-[#6e6e73]">Installation</span>
+                                  <span className="text-sm font-semibold text-[#1d1d1f]">
+                                    {r.installPrice != null ? `$${r.installPrice.toFixed(2)}` : "—"}
+                                  </span>
+                                </div>
+                                <div className="border-t border-[#e5e5ea] pt-2.5 flex justify-between items-center">
+                                  <span className="text-sm font-bold text-[#1d1d1f]">Total / tire</span>
+                                  <span className="text-lg font-black" style={{ color: isBest ? "#f97316" : "#1d1d1f" }}>
+                                    ${r.total.toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {r.note && (
+                                <p className="text-[11px] text-[#a1a1a6] mb-4 flex items-start gap-1.5">
+                                  <svg className="w-3 h-3 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                  </svg>
+                                  {r.note}
+                                </p>
+                              )}
+
+                              <a
+                                href={r.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`mt-auto flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-bold transition-all duration-200 active:scale-95 ${
+                                  isBest
+                                    ? "bg-[#f97316] hover:bg-[#ea6b0f] text-white shadow-sm hover:shadow-md hover:shadow-[#f97316]/30"
+                                    : "bg-[#1d1d1f] hover:bg-[#2d2d2f] text-white"
+                                }`}
+                              >
+                                View Deal
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <p className="mt-6 text-center text-[12px] text-[#a1a1a6] max-w-lg mx-auto leading-relaxed">
+                      Prices are retrieved in real-time and may differ from in-store pricing. Always confirm with the retailer before purchasing.
+                      Installation fees are per tire and may vary by location.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </section>
