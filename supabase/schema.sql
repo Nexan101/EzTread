@@ -69,7 +69,7 @@ CREATE INDEX IF NOT EXISTS idx_shop_tire_ranges_shop_id ON shop_tire_ranges(shop
 CREATE INDEX IF NOT EXISTS idx_leads_shop_id           ON leads(shop_id);
 
 -- ─── Row Level Security ────────────────────────────────────────────────────────
--- All tables are admin-only; the anon/public role has no access.
+-- All tables are admin-only; neither the anon nor authenticated role has access.
 -- The service role (used by server-side code) bypasses RLS automatically.
 
 ALTER TABLE shops             ENABLE ROW LEVEL SECURITY;
@@ -77,9 +77,16 @@ ALTER TABLE shop_services     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shop_tire_ranges  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE leads             ENABLE ROW LEVEL SECURITY;
 
--- No rows are accessible to anonymous or authenticated non-admin users.
+-- Explicitly deny both anon and authenticated roles so Supabase's security
+-- scanner does not flag sensitive columns (email, phone, stripe_customer_id,
+-- customer_email, customer_phone, etc.) as publicly accessible.
 -- Server-side code uses the service role key and is unaffected by these policies.
-CREATE POLICY "admin_only_shops"            ON shops            FOR ALL TO authenticated USING (false);
-CREATE POLICY "admin_only_shop_services"    ON shop_services    FOR ALL TO authenticated USING (false);
-CREATE POLICY "admin_only_shop_tire_ranges" ON shop_tire_ranges FOR ALL TO authenticated USING (false);
-CREATE POLICY "admin_only_leads"            ON leads            FOR ALL TO authenticated USING (false);
+CREATE POLICY "deny_anon_shops"             ON shops            FOR ALL TO anon          USING (false);
+CREATE POLICY "deny_anon_shop_services"     ON shop_services    FOR ALL TO anon          USING (false);
+CREATE POLICY "deny_anon_shop_tire_ranges"  ON shop_tire_ranges FOR ALL TO anon          USING (false);
+CREATE POLICY "deny_anon_leads"             ON leads            FOR ALL TO anon          USING (false);
+
+CREATE POLICY "deny_auth_shops"             ON shops            FOR ALL TO authenticated USING (false);
+CREATE POLICY "deny_auth_shop_services"     ON shop_services    FOR ALL TO authenticated USING (false);
+CREATE POLICY "deny_auth_shop_tire_ranges"  ON shop_tire_ranges FOR ALL TO authenticated USING (false);
+CREATE POLICY "deny_auth_leads"             ON leads            FOR ALL TO authenticated USING (false);

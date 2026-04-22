@@ -30,6 +30,27 @@ export async function POST() {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+    await safeRun(sql, () => sql`ALTER TABLE verified_shops ENABLE ROW LEVEL SECURITY`);
+    await safeRun(sql, () => sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_policies
+          WHERE tablename = 'verified_shops' AND policyname = 'deny_anon_verified_shops'
+        ) THEN
+          CREATE POLICY "deny_anon_verified_shops" ON verified_shops FOR ALL TO anon USING (false);
+        END IF;
+      END $$
+    `);
+    await safeRun(sql, () => sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_policies
+          WHERE tablename = 'verified_shops' AND policyname = 'deny_auth_verified_shops'
+        ) THEN
+          CREATE POLICY "deny_auth_verified_shops" ON verified_shops FOR ALL TO authenticated USING (false);
+        END IF;
+      END $$
+    `);
 
     await safeRun(sql, () => sql`
       CREATE TABLE IF NOT EXISTS recommended_shops (
@@ -37,6 +58,27 @@ export async function POST() {
         shop_name  TEXT NOT NULL,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
+    `);
+    await safeRun(sql, () => sql`ALTER TABLE recommended_shops ENABLE ROW LEVEL SECURITY`);
+    await safeRun(sql, () => sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_policies
+          WHERE tablename = 'recommended_shops' AND policyname = 'deny_anon_recommended_shops'
+        ) THEN
+          CREATE POLICY "deny_anon_recommended_shops" ON recommended_shops FOR ALL TO anon USING (false);
+        END IF;
+      END $$
+    `);
+    await safeRun(sql, () => sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_policies
+          WHERE tablename = 'recommended_shops' AND policyname = 'deny_auth_recommended_shops'
+        ) THEN
+          CREATE POLICY "deny_auth_recommended_shops" ON recommended_shops FOR ALL TO authenticated USING (false);
+        END IF;
+      END $$
     `);
 
     await safeRun(sql, () => sql`
@@ -49,6 +91,27 @@ export async function POST() {
         balancing    TEXT,
         updated_at   TIMESTAMPTZ DEFAULT NOW()
       )
+    `);
+    await safeRun(sql, () => sql`ALTER TABLE shop_labor_estimates ENABLE ROW LEVEL SECURITY`);
+    await safeRun(sql, () => sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_policies
+          WHERE tablename = 'shop_labor_estimates' AND policyname = 'deny_anon_shop_labor_estimates'
+        ) THEN
+          CREATE POLICY "deny_anon_shop_labor_estimates" ON shop_labor_estimates FOR ALL TO anon USING (false);
+        END IF;
+      END $$
+    `);
+    await safeRun(sql, () => sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_policies
+          WHERE tablename = 'shop_labor_estimates' AND policyname = 'deny_auth_shop_labor_estimates'
+        ) THEN
+          CREATE POLICY "deny_auth_shop_labor_estimates" ON shop_labor_estimates FOR ALL TO authenticated USING (false);
+        END IF;
+      END $$
     `);
 
     // Legacy installs used DECIMAL; convert to TEXT for freeform price labels
