@@ -133,6 +133,50 @@ export async function POST() {
       $migration$
     `);
 
+    await safeRun(sql, () => sql`
+      CREATE TABLE IF NOT EXISTS shop_claims (
+        id          BIGSERIAL PRIMARY KEY,
+        shop_id     TEXT NOT NULL UNIQUE,
+        shop_name   TEXT NOT NULL,
+        owner_email TEXT NOT NULL,
+        created_at  TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await safeRun(sql, () => sql`ALTER TABLE shop_claims ENABLE ROW LEVEL SECURITY`);
+    await safeRun(sql, () => sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_policies
+          WHERE tablename = 'shop_claims' AND policyname = 'deny_anon_shop_claims'
+        ) THEN
+          CREATE POLICY "deny_anon_shop_claims" ON shop_claims FOR ALL TO anon USING (false);
+        END IF;
+      END $$
+    `);
+    await safeRun(sql, () => sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_policies
+          WHERE tablename = 'shop_claims' AND policyname = 'deny_auth_shop_claims'
+        ) THEN
+          CREATE POLICY "deny_auth_shop_claims" ON shop_claims FOR ALL TO authenticated USING (false);
+        END IF;
+      END $$
+    `);
+
+    await safeRun(sql, () => sql`
+      CREATE TABLE IF NOT EXISTS shop_analytics (
+        id         BIGSERIAL PRIMARY KEY,
+        place_id   TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await safeRun(sql, () => sql`
+      CREATE INDEX IF NOT EXISTS idx_shop_analytics_lookup
+        ON shop_analytics (place_id, event_type, created_at DESC)
+    `);
+
     // Tell PostgREST to reload its schema cache so new tables are visible immediately
     await safeRun(sql, () => sql`NOTIFY pgrst, 'reload schema'`);
 

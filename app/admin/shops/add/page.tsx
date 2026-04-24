@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatPhone } from "@/lib/utils/formatPhone";
 import { calculateCost } from "@/lib/utils/calculateCost";
+import GooglePlacesSearch, { type PlaceResult } from "@/components/GooglePlacesSearch";
 
 // ── Zod Schema ────────────────────────────────────────────────────────────────
 const schema = z.object({
@@ -105,6 +106,16 @@ export default function AddShopPage() {
 
   const watched = useWatch({ control });
 
+  function handlePlaceSelected(place: PlaceResult) {
+    if (place.name) setValue("name", place.name);
+    if (place.address) setValue("address", place.address);
+    if (place.city) setValue("city", place.city);
+    if (place.state) setValue("state", place.state);
+    if (place.zip) setValue("zip", place.zip);
+    if (place.phone) setValue("phone", formatPhone(place.phone));
+    if (place.google_rating) setValue("google_rating", place.google_rating);
+  }
+
   // Live cost preview
   const previewServices = {
     mounting_balancing_per_tire: Number(watched.mounting_balancing_per_tire) || 0,
@@ -187,6 +198,22 @@ export default function AddShopPage() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Left — form sections */}
           <div className="xl:col-span-2 space-y-6">
+
+            {/* Google Places autofill */}
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-blue-900">Import from Google Maps</p>
+                  <p className="text-xs text-blue-600 mt-0.5">Search for any shop to auto-fill name, address, phone, and rating. You&apos;ll still need to enter pricing.</p>
+                </div>
+              </div>
+              <GooglePlacesSearch onPlaceSelected={handlePlaceSelected} />
+            </div>
 
             {/* Section 1: Basic Info */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
