@@ -25,6 +25,8 @@ export default function LaborEstimatesPage() {
   const [alignment, setAlignment] = useState("");
   const [rotation, setRotation] = useState("");
   const [balancing, setBalancing] = useState("");
+  const [tpms, setTpms] = useState("");
+  const [patch, setPatch] = useState("");
   const [saving, setSaving] = useState(false);
 
   const [toastMsg, setToastMsg] = useState("");
@@ -53,6 +55,8 @@ export default function LaborEstimatesPage() {
     setAlignment("");
     setRotation("");
     setBalancing("");
+    setTpms("");
+    setPatch("");
     try {
       const res = await fetch(`/api/admin/shop-labor-estimates?placeId=${encodeURIComponent(shop.placeId)}`);
       const data = await res.json();
@@ -62,6 +66,8 @@ export default function LaborEstimatesPage() {
         setAlignment(e.alignment != null ? String(e.alignment) : "");
         setRotation(e.rotation != null ? String(e.rotation) : "");
         setBalancing(e.balancing != null ? String(e.balancing) : "");
+        setTpms(e.tpms != null ? String(e.tpms) : "");
+        setPatch(e.patch != null ? String(e.patch) : "");
       }
     } finally {
       setLoadingEstimate(false);
@@ -103,6 +109,8 @@ export default function LaborEstimatesPage() {
         alignment: alignment.trim() || null,
         rotation: rotation.trim() || null,
         balancing: balancing.trim() || null,
+        tpms: tpms.trim() || null,
+        patch: patch.trim() || null,
       }),
     });
     const data = await res.json();
@@ -114,7 +122,7 @@ export default function LaborEstimatesPage() {
     }
     showToast(`Saved labor prices for “${selected.name}”`);
     const anyFilled = Boolean(
-      installation.trim() || alignment.trim() || rotation.trim() || balancing.trim()
+      installation.trim() || alignment.trim() || rotation.trim() || balancing.trim() || tpms.trim() || patch.trim()
     );
     setResults((prev) =>
       prev.map((r) =>
@@ -266,6 +274,28 @@ export default function LaborEstimatesPage() {
                     onChange={(e) => setBalancing(e.target.value)}
                     className={`${inputCls} mt-1`}
                     placeholder="e.g. 15"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">TPMS Sensor ($)</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={tpms}
+                    onChange={(e) => setTpms(e.target.value)}
+                    className={`${inputCls} mt-1`}
+                    placeholder="e.g. 40"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Patch ($)</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={patch}
+                    onChange={(e) => setPatch(e.target.value)}
+                    className={`${inputCls} mt-1`}
+                    placeholder="e.g. 20"
                   />
                 </label>
               </div>

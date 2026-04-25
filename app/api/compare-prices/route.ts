@@ -25,6 +25,9 @@ export interface PriceResult {
   deliveryLabel?: string;
   stockLabel?: string;
   note?: string;
+  mileWarranty?: string;
+  terrain?: string;
+  runFlat?: boolean;
 }
 
 export interface ComparePricesResponse {
@@ -66,7 +69,19 @@ export async function POST(req: NextRequest) {
     // the same store (direct prices are more accurate and link to the product).
     const samsFromSerp = serpResults.filter((r) => r.storeBrand !== "sams");
     const directSams   = samsResults.length > 0 ? samsResults : serpResults.filter((r) => r.storeBrand === "sams");
-    const results = [...samsFromSerp, ...directSams];
+    let results = [...samsFromSerp, ...directSams];
+
+    // If the user requested a specific brand, drop any result whose title
+    // doesn't contain that brand name. Google Shopping sometimes returns
+    // off-brand results when a brand query is used.
+    if (cleanBrand) {
+      const brandLower = cleanBrand.toLowerCase();
+      results = results.filter(
+        (r) =>
+          r.tireName.toLowerCase().includes(brandLower) ||
+          r.tireBrand?.toLowerCase() === brandLower
+      );
+    }
 
     // Costco does not list tire prices on Google Shopping — always inject a
     // "See pricing" card so users know to check there, unless a real Costco

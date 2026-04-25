@@ -89,6 +89,8 @@ export async function POST() {
         alignment    TEXT,
         rotation     TEXT,
         balancing    TEXT,
+        tpms         TEXT,
+        patch        TEXT,
         updated_at   TIMESTAMPTZ DEFAULT NOW()
       )
     `);
@@ -131,6 +133,28 @@ export async function POST() {
         END IF;
       END
       $migration$
+    `);
+
+    // Add tpms / patch columns if they don't exist yet (added in a later deploy)
+    await safeRun(sql, () => sql`
+      DO $migration2$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'shop_labor_estimates'
+            AND column_name = 'tpms'
+        ) THEN
+          ALTER TABLE shop_labor_estimates ADD COLUMN tpms TEXT;
+        END IF;
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'shop_labor_estimates'
+            AND column_name = 'patch'
+        ) THEN
+          ALTER TABLE shop_labor_estimates ADD COLUMN patch TEXT;
+        END IF;
+      END
+      $migration2$
     `);
 
     await safeRun(sql, () => sql`

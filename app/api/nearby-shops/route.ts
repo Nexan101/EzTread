@@ -64,6 +64,8 @@ export interface NearbyShopLaborEstimate {
   alignment: string | null;
   rotation: string | null;
   balancing: string | null;
+  tpms: string | null;
+  patch: string | null;
 }
 
 export interface NearbyShop {
@@ -288,7 +290,7 @@ export async function POST(req: NextRequest) {
       try {
         const sqlConn = postgres(process.env.DATABASE_URL, { max: 1, idle_timeout: 5 });
         const rows = await sqlConn`
-          SELECT place_id, installation, alignment, rotation, balancing
+          SELECT place_id, installation, alignment, rotation, balancing, tpms, patch
           FROM shop_labor_estimates
           WHERE place_id IN ${sqlConn(placeIds)}
         `;
@@ -303,6 +305,8 @@ export async function POST(req: NextRequest) {
             alignment: asPriceStr(r.alignment),
             rotation: asPriceStr(r.rotation),
             balancing: asPriceStr(r.balancing),
+            tpms: asPriceStr(r.tpms),
+            patch: asPriceStr(r.patch),
           });
         }
         await sqlConn.end();

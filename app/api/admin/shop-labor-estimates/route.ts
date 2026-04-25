@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   const sql = getDb();
   try {
     const rows = await sql`
-      SELECT place_id, shop_name, installation, alignment, rotation, balancing, updated_at
+      SELECT place_id, shop_name, installation, alignment, rotation, balancing, tpms, patch, updated_at
       FROM shop_labor_estimates
       WHERE place_id = ${placeId}
     `;
@@ -49,6 +49,8 @@ export async function GET(req: NextRequest) {
         alignment: str(row.alignment),
         rotation: str(row.rotation),
         balancing: str(row.balancing),
+        tpms: str(row.tpms),
+        patch: str(row.patch),
         updated_at: row.updated_at,
       },
     });
@@ -82,11 +84,15 @@ export async function POST(req: NextRequest) {
   let alignment: string | null;
   let rotation: string | null;
   let balancing: string | null;
+  let tpms: string | null;
+  let patch: string | null;
   try {
     installation = fieldOr400("Installation", body.installation);
     alignment = fieldOr400("Alignment", body.alignment);
     rotation = fieldOr400("Rotation", body.rotation);
     balancing = fieldOr400("Balancing", body.balancing);
+    tpms = fieldOr400("TPMS Sensor", body.tpms);
+    patch = fieldOr400("Patch", body.patch);
   } catch (e) {
     const msg = e instanceof Error && e.message.startsWith("INVALID:")
       ? `${e.message.replace("INVALID:", "")}: use digits, optional decimals, optional hyphens (e.g. 25 or 20-40).`
@@ -98,7 +104,7 @@ export async function POST(req: NextRequest) {
   try {
     await sql`
       INSERT INTO shop_labor_estimates (
-        place_id, shop_name, installation, alignment, rotation, balancing, updated_at
+        place_id, shop_name, installation, alignment, rotation, balancing, tpms, patch, updated_at
       )
       VALUES (
         ${place_id.trim()},
@@ -107,6 +113,8 @@ export async function POST(req: NextRequest) {
         ${alignment},
         ${rotation},
         ${balancing},
+        ${tpms},
+        ${patch},
         NOW()
       )
       ON CONFLICT (place_id) DO UPDATE SET
@@ -115,6 +123,8 @@ export async function POST(req: NextRequest) {
         alignment    = EXCLUDED.alignment,
         rotation     = EXCLUDED.rotation,
         balancing    = EXCLUDED.balancing,
+        tpms         = EXCLUDED.tpms,
+        patch        = EXCLUDED.patch,
         updated_at   = NOW()
     `;
     return NextResponse.json({ success: true });

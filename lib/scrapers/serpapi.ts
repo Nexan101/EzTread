@@ -179,6 +179,37 @@ function detectCondition(
   return searchCondition === "used" ? "used" : "new";
 }
 
+/**
+ * Extract a mileage warranty figure from a product title.
+ * e.g. "65,000-Mile Warranty" → "65,000 mi"
+ *      "60K Mile Warranty"    → "60K mi"
+ */
+function extractMileWarranty(title: string): string | undefined {
+  // Match e.g. "65,000-mile", "60,000 mile", "65k-mile", "50K mile"
+  const m = title.match(/(\d[\d,]*\s*[Kk]?)\s*[-–]?\s*[Mm]ile\b/);
+  if (!m) return undefined;
+  const raw = m[1].trim();
+  return `${raw} mi`;
+}
+
+/** Maps common terrain descriptors found in tire titles to a clean label. */
+function extractTerrain(title: string): string | undefined {
+  if (/\bA\/T\b|All[\s-]Terrain/i.test(title))  return "All-Terrain";
+  if (/\bM\/T\b|Mud[\s-]Terrain/i.test(title))  return "Mud-Terrain";
+  if (/\bA\/W\b|All[\s-]Weather/i.test(title))  return "All-Weather";
+  if (/\bA\/S\b|All[\s-]Season/i.test(title))   return "All-Season";
+  if (/\bH\/T\b|Highway[\s-]Terrain/i.test(title)) return "Highway";
+  if (/\bwinter\b|\bsnow\b/i.test(title))        return "Winter";
+  if (/\bsummer\b/i.test(title))                 return "Summer";
+  if (/\bperformance\b/i.test(title))            return "Performance";
+  return undefined;
+}
+
+/** Returns true if the title references a run-flat tire. */
+function extractRunFlat(title: string): boolean {
+  return /run[\s-]?flat|\brft\b|\brof\b/i.test(title);
+}
+
 function extractStockLabel(extensions: string[] | undefined): string | undefined {
   if (!extensions) return undefined;
   for (const ext of extensions) {
@@ -363,6 +394,9 @@ export async function scrapeGoogleShopping(
         deliveryLabel,
         stockLabel,
         note:          item.delivery ?? undefined,
+        mileWarranty:  extractMileWarranty(title) || undefined,
+        terrain:       extractTerrain(title)      || undefined,
+        runFlat:       extractRunFlat(title)      || undefined,
       });
     }
   }

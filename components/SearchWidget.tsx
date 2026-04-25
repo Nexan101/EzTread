@@ -33,6 +33,8 @@ const LABOR_SERVICES: LaborService[] = [
   { id: "balance",      label: "Balance",      desc: "Smooth ride" },
   { id: "alignment",    label: "Alignment",    desc: "Straight tracking" },
   { id: "installation", label: "Installation", desc: "Mount & fit" },
+  { id: "tpms",         label: "TPMS Sensor",  desc: "Pressure monitor" },
+  { id: "patch",        label: "Patch",        desc: "Puncture repair" },
 ];
 
 /** Show admin-entered text as-is with a single leading $ when missing (not parsed as min/max). */
@@ -44,7 +46,7 @@ function laborPriceLabel(v: string | null | undefined): string {
 
 function laborHasAnyEstimate(estimate: NearbyShopLaborEstimate | null): boolean {
   if (!estimate) return false;
-  return [estimate.installation, estimate.alignment, estimate.rotation, estimate.balancing].some(
+  return [estimate.installation, estimate.alignment, estimate.rotation, estimate.balancing, estimate.tpms, estimate.patch].some(
     (x) => x != null && String(x).trim() !== ""
   );
 }
@@ -149,10 +151,8 @@ export default function SearchWidget() {
   const [filterOpenNow, setFilterOpenNow]   = useState(false);
   const [filterVerified, setFilterVerified] = useState(false);
   const [filterMinRating, setFilterMinRating] = useState(0);
-  const [filterMaxInstall, setFilterMaxInstall]     = useState(0);
-  const [filterMaxAlignment, setFilterMaxAlignment] = useState(0);
-  const [filterMaxRotation, setFilterMaxRotation]   = useState(0);
-  const [filterMaxBalancing, setFilterMaxBalancing] = useState(0);
+  const [filterSortServices, setFilterSortServices] = useState<Set<string>>(new Set());
+  const [filterPriceSort, setFilterPriceSort]       = useState<"asc" | "desc">("asc");
   const [filterMaxMiles, setFilterMaxMiles]         = useState(15);
 
   // Results filter state
@@ -185,31 +185,55 @@ export default function SearchWidget() {
   }, []);
 
   // ── Filtered shops (component-level so both tracking and render share one source) ──
+  // Map service id → laborEstimate key
+  const SERVICE_ESTIMATE_KEY: Record<string, keyof import("@/app/api/nearby-shops/route").NearbyShopLaborEstimate> = {
+    installation: "installation",
+    balance:      "balancing",
+    alignment:    "alignment",
+    rotation:     "rotation",
+    tpms:         "tpms",
+    patch:        "patch",
+  };
+
+  function shopServiceTotal(shop: import("@/app/api/nearby-shops/route").NearbyShop, services: Set<string>): number {
+    let total = 0;
+    let hasAny = false;
+    for (const svcId of services) {
+      const key = SERVICE_ESTIMATE_KEY[svcId];
+      if (!key) continue;
+      const val = shop.laborEstimate?.[key];
+      if (val) {
+        const num = parseFloat(String(val).replace(/[^0-9.]/g, ""));
+        if (!isNaN(num)) { total += num; hasAny = true; }
+      }
+    }
+    return hasAny ? total : Infinity;
+  }
+
   const filteredShops = useMemo(() => {
     if (phase !== "shops") return [];
-    return shops.filter((shop) => {
+    const filtered = shops.filter((shop) => {
       if (shopSearch && !shop.name.toLowerCase().includes(shopSearch.toLowerCase()) &&
           !shop.address.toLowerCase().includes(shopSearch.toLowerCase())) return false;
       if (filterOpenNow && shop.isOpen !== true) return false;
       if (filterVerified && !shop.isVerified) return false;
       if (filterMinRating > 0 && (shop.rating == null || shop.rating < filterMinRating)) return false;
-      const checkPrice = (max: number, val: string | null | undefined) => {
-        if (max === 0 || !val) return true;
-        const num = parseFloat(String(val).replace(/[^0-9.]/g, ""));
-        return isNaN(num) || num <= max;
-      };
-      if (!checkPrice(filterMaxInstall, shop.laborEstimate?.installation)) return false;
-      if (!checkPrice(filterMaxAlignment, shop.laborEstimate?.alignment)) return false;
-      if (!checkPrice(filterMaxRotation, shop.laborEstimate?.rotation)) return false;
-      if (!checkPrice(filterMaxBalancing, shop.laborEstimate?.balancing)) return false;
       if (shop.distanceMeters != null) {
         const shopMiles = shop.distanceMeters / 1609.34;
         if (shopMiles > filterMaxMiles) return false;
       }
       return true;
     });
+    if (filterSortServices.size > 0) {
+      filtered.sort((a, b) => {
+        const aTotal = shopServiceTotal(a, filterSortServices);
+        const bTotal = shopServiceTotal(b, filterSortServices);
+        return filterPriceSort === "asc" ? aTotal - bTotal : bTotal - aTotal;
+      });
+    }
+    return filtered;
   }, [phase, shops, shopSearch, filterOpenNow, filterVerified, filterMinRating,
-      filterMaxInstall, filterMaxAlignment, filterMaxRotation, filterMaxBalancing, filterMaxMiles]);
+      filterSortServices, filterPriceSort, filterMaxMiles]);
 
   // Keep quick-search bar in sync with the active tire size
   useEffect(() => {
@@ -326,6 +350,7 @@ export default function SearchWidget() {
         } else {
           setShops(data.shops ?? []);
           setVisibleCount(6);
+          setFilterSortServices(new Set(selectedServices));
           setPhase("shops");
         }
       } catch {
@@ -424,6 +449,7 @@ export default function SearchWidget() {
       } else {
         setShops(data.shops ?? []);
         setVisibleCount(6);
+        setFilterSortServices(new Set(selectedServices));
         setPhase("shops");
         // Scroll to top of results area
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -445,10 +471,8 @@ export default function SearchWidget() {
     setFilterOpenNow(false);
     setFilterVerified(false);
     setFilterMinRating(0);
-    setFilterMaxInstall(0);
-    setFilterMaxAlignment(0);
-    setFilterMaxRotation(0);
-    setFilterMaxBalancing(0);
+    setFilterSortServices(new Set());
+    setFilterPriceSort("asc");
     setFilterMaxMiles(15);
     setResultSortBy("price");
     setResultInStockOnly(false);
@@ -532,10 +556,7 @@ export default function SearchWidget() {
       (filterOpenNow ? 1 : 0) +
       (filterVerified ? 1 : 0) +
       (filterMinRating > 0 ? 1 : 0) +
-      (filterMaxInstall > 0 ? 1 : 0) +
-      (filterMaxAlignment > 0 ? 1 : 0) +
-      (filterMaxRotation > 0 ? 1 : 0) +
-      (filterMaxBalancing > 0 ? 1 : 0) +
+      (filterSortServices.size > 0 ? 1 : 0) +
       (filterMaxMiles < 15 ? 1 : 0);
 
     return (
@@ -618,7 +639,7 @@ export default function SearchWidget() {
             </button>
             {activeFilterCount > 0 && (
               <button
-                onClick={() => { setFilterOpenNow(false); setFilterVerified(false); setFilterMinRating(0); setFilterMaxInstall(0); setFilterMaxAlignment(0); setFilterMaxRotation(0); setFilterMaxBalancing(0); setFilterMaxMiles(15); }}
+                onClick={() => { setFilterOpenNow(false); setFilterVerified(false); setFilterMinRating(0); setFilterSortServices(new Set()); setFilterPriceSort("asc"); setFilterMaxMiles(15); }}
                 className="text-sm font-semibold text-red-400"
               >
                 Clear all
@@ -630,7 +651,7 @@ export default function SearchWidget() {
           <div className="lg:flex lg:gap-6 lg:items-start">
 
             {/* ── Left filter panel ── */}
-            <div className={`${showMobileFilters ? "block" : "hidden"} lg:block w-full lg:w-72 lg:shrink-0 lg:sticky lg:top-24 mb-4 lg:mb-0`}>
+            <div className={`${showMobileFilters ? "block" : "hidden"} lg:block w-full lg:w-72 lg:shrink-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto mb-4 lg:mb-0`}>
 
               {/* Filters */}
               <div className="bg-white rounded-2xl border border-[#e5e5ea] shadow-sm p-4 space-y-5">
@@ -638,7 +659,7 @@ export default function SearchWidget() {
                   <p className="text-[11px] font-bold uppercase tracking-wider text-[#6e6e73]">Filters</p>
                   {activeFilterCount > 0 && (
                     <button
-                      onClick={() => { setFilterOpenNow(false); setFilterVerified(false); setFilterMinRating(0); setFilterMaxInstall(0); setFilterMaxAlignment(0); setFilterMaxRotation(0); setFilterMaxBalancing(0); setFilterMaxMiles(15); }}
+                      onClick={() => { setFilterOpenNow(false); setFilterVerified(false); setFilterMinRating(0); setFilterSortServices(new Set()); setFilterPriceSort("asc"); setFilterMaxMiles(15); }}
                       className="text-[11px] font-semibold text-red-400 hover:text-red-500 transition-colors"
                     >
                       Clear all
@@ -712,30 +733,55 @@ export default function SearchWidget() {
 
                 {/* Service price ranges */}
                 <div>
-                  <p className="text-[12px] font-semibold text-[#1d1d1f] mb-3">Budget by Service</p>
-                  <div className="space-y-3">
-                    {[
-                      { label: "Installation", val: filterMaxInstall, set: setFilterMaxInstall, opts: [0, 25, 50, 100] },
-                      { label: "Alignment",    val: filterMaxAlignment, set: setFilterMaxAlignment, opts: [0, 50, 100, 150] },
-                      { label: "Rotation",     val: filterMaxRotation,  set: setFilterMaxRotation,  opts: [0, 20, 40, 60]  },
-                      { label: "Balancing",    val: filterMaxBalancing, set: setFilterMaxBalancing, opts: [0, 15, 30, 50]  },
-                    ].map(({ label, val, set, opts }) => (
-                      <div key={label}>
-                        <p className="text-[11px] font-semibold text-[#6e6e73] mb-1.5">{label}</p>
-                        <div className="grid grid-cols-4 gap-1">
-                          {opts.map((p) => (
-                            <button
-                              key={p}
-                              onClick={() => set(p)}
-                              className={`py-1 px-1 rounded-lg text-[11px] font-semibold border transition-all ${val === p ? "bg-[#f97316] border-[#f97316] text-white" : "border-[#e5e5ea] text-[#6e6e73] hover:border-[#f97316]/50 hover:text-[#f97316]"}`}
-                            >
-                              {p === 0 ? "Any" : `≤$${p}`}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-[12px] font-semibold text-[#1d1d1f] mb-2">Budget by Service</p>
+
+                  {/* Services dropdown */}
+                  <details className="group mb-3">
+                    <summary className="flex items-center justify-between cursor-pointer list-none px-3 py-2 rounded-xl border border-[#e5e5ea] bg-white text-[12px] font-medium text-[#1d1d1f] hover:border-[#f97316]/50 transition-colors">
+                      <span>
+                        {filterSortServices.size === 0
+                          ? "No services selected"
+                          : `${filterSortServices.size} service${filterSortServices.size !== 1 ? "s" : ""} selected`}
+                      </span>
+                      <svg className="w-3.5 h-3.5 text-[#a1a1a6] group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                    </summary>
+                    <div className="mt-1 border border-[#e5e5ea] rounded-xl bg-white p-1.5">
+                      {LABOR_SERVICES.map((svc) => {
+                        const checked = filterSortServices.has(svc.id);
+                        return (
+                          <label
+                            key={svc.id}
+                            onClick={() => setFilterSortServices((prev) => {
+                              const next = new Set(prev);
+                              next.has(svc.id) ? next.delete(svc.id) : next.add(svc.id);
+                              return next;
+                            })}
+                            className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[#f5f5f7] cursor-pointer select-none"
+                          >
+                            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all ${checked ? "bg-[#f97316] border-[#f97316]" : "border-[#d2d2d7]"}`}>
+                              {checked && <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                            </div>
+                            <span className="text-[12px] text-[#1d1d1f]">{svc.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </details>
+
+                  {/* Sort direction */}
+                  {filterSortServices.size > 0 && (
+                    <div className="flex rounded-xl bg-[#f5f5f7] p-1 gap-1">
+                      {([["asc", "Cheapest First"], ["desc", "Most Expensive"]] as const).map(([val, label]) => (
+                        <button
+                          key={val}
+                          onClick={() => setFilterPriceSort(val)}
+                          className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${filterPriceSort === val ? "bg-white text-[#f97316] shadow-sm border border-[#e5e5ea]" : "text-[#6e6e73] hover:text-[#1d1d1f]"}`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {activeFilterCount > 0 && (
@@ -843,7 +889,9 @@ export default function SearchWidget() {
                                     { label: "Alignment", val: shop.laborEstimate!.alignment },
                                     { label: "Rotation", val: shop.laborEstimate!.rotation },
                                     { label: "Balancing", val: shop.laborEstimate!.balancing },
-                                  ].map(({ label, val }) => (
+                                    { label: "TPMS Sensor", val: shop.laborEstimate!.tpms },
+                                    { label: "Patch", val: shop.laborEstimate!.patch },
+                                  ].filter(({ val }) => val != null && String(val).trim() !== "").map(({ label, val }) => (
                                     <li key={label} className="flex justify-between gap-2">
                                       <span className="text-[#6e6e73]">{label}:</span>
                                       <span className="font-semibold text-[#1d1d1f] tabular-nums">{laborPriceLabel(val)}</span>
@@ -1260,6 +1308,36 @@ export default function SearchWidget() {
                                   )}
                                 </div>
                                 <p className="text-[12px] text-[#6e6e73] leading-snug line-clamp-2">{r.tireName}</p>
+                                {/* Tire attribute pills */}
+                                {(r.terrain || r.runFlat || r.mileWarranty) && (
+                                  <div className="flex flex-wrap gap-1.5 mt-2">
+                                    {r.terrain && (
+                                      <span className="flex items-center gap-1 text-[10px] font-semibold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                                        <svg className="w-2.5 h-2.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+                                        </svg>
+                                        {r.terrain}
+                                      </span>
+                                    )}
+                                    {r.runFlat && (
+                                      <span className="flex items-center gap-1 text-[10px] font-semibold text-purple-700 bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-full">
+                                        <svg className="w-2.5 h-2.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                          <circle cx="12" cy="12" r="9" strokeWidth={2} />
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" />
+                                        </svg>
+                                        Run-Flat
+                                      </span>
+                                    )}
+                                    {r.mileWarranty && (
+                                      <span className="flex items-center gap-1 text-[10px] font-semibold text-[#6e6e73] bg-[#f5f5f7] border border-[#e5e5ea] px-2 py-0.5 rounded-full">
+                                        <svg className="w-2.5 h-2.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                        </svg>
+                                        {r.mileWarranty} warranty
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
                               </div>
 
                               {/* Price box */}
@@ -1667,5 +1745,7 @@ function ServiceIcon({ id, active }: { id: string; active: boolean }) {
   if (id === "rotation") return <div className={cls}><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></div>;
   if (id === "balance") return <div className={cls}><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 6l9-3 9 3M3 12l9-3 9 3M3 18l9-3 9 3" /></svg></div>;
   if (id === "alignment") return <div className={cls}><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m-8-8h16" /><circle cx="12" cy="12" r="4" strokeWidth={1.8} /></svg></div>;
+  if (id === "tpms") return <div className={cls}><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /><circle cx="12" cy="14" r="2" strokeWidth={1.8} /></svg></div>;
+  if (id === "patch") return <div className={cls}><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg></div>;
   return <div className={cls}><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>;
 }
