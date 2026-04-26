@@ -1,6 +1,5 @@
 const BENEFITS = [
-  "Free premium listing for 3 months",
-  "Receive ready-to-book customer leads",
+  "Manage your services and pricing online",
   "List all your services — tires, alignments, and more",
   "Manage your services and pricing online",
   "Appear first when customers search nearby",
@@ -55,7 +54,7 @@ export default function ShopCTA() {
               </div>
               <div>
                 <h3 className="font-bold text-[#1d1d1f] text-[17px] leading-tight">Shop Partner Program</h3>
-                <p className="text-xs text-[#6e6e73] mt-0.5">Start free for 3 months</p>
+                <p className="text-xs text-[#6e6e73] mt-0.5">Cancel anytime · No setup fees</p>
               </div>
             </div>
 
@@ -68,8 +67,7 @@ export default function ShopCTA() {
                     <span className="text-4xl font-bold text-[#1d1d1f]">$149</span>
                     <span className="text-[#6e6e73] text-sm">/month</span>
                   </div>
-                  <p className="text-xs text-[#6e6e73] mt-1">Cancel anytime · No setup fees</p>
-                </div>
+                  <p className="text-xs text-[#6e6e73] mt-1">Cancel anytime · No setup fees</p>                </div>
                 <div className="text-right">
                   <p className="text-xs text-[#6e6e73] mb-1">Avg. monthly ROI</p>
                   <p className="text-2xl font-bold text-green-600">$2,400<span className="text-base font-normal text-[#6e6e73]">+</span></p>
@@ -79,14 +77,14 @@ export default function ShopCTA() {
 
             {/* CTA */}
             <a
-              href="#"
+              href="/join"
               className="block w-full bg-[#f97316] hover:bg-[#ea6b0f] text-white font-semibold text-[15px] text-center py-4 rounded-2xl transition-all duration-200 hover:shadow-lg hover:shadow-[#f97316]/25 focus:outline-none focus:ring-2 focus:ring-[#f97316]/40"
             >
               Join as a Shop Partner
             </a>
 
             <p className="text-center text-xs text-[#a1a1a6] mt-3.5">
-              No credit card required for trial
+              Cancel anytime · No setup fees
             </p>
 
             {/* Avatars */}

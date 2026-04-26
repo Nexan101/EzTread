@@ -56,6 +56,13 @@ export default function HeroSection() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
             <Link
               href="/compare"
+              onClick={() => {
+                fetch("/api/track", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ event_type: "price_compare" }),
+                }).catch(() => {});
+              }}
               className="group relative inline-flex items-center justify-center gap-3 bg-[#f97316] hover:bg-[#ea6b0f] text-white font-bold text-[18px] px-10 py-5 rounded-2xl transition-all duration-200 hover:shadow-2xl hover:shadow-[#f97316]/35 hover:-translate-y-1 active:scale-95 focus:outline-none focus:ring-4 focus:ring-[#f97316]/30"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

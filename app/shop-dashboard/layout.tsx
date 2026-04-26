@@ -2,17 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const NAV = [
-  {
-    label: "Dashboard",
-    href: "/shop-dashboard",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-      </svg>
-    ),
-  },
   {
     label: "Pricing",
     href: "/shop-dashboard/pricing",
@@ -35,6 +27,18 @@ const NAV = [
 
 export default function ShopDashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [shopName, setShopName] = useState<string | null>(null);
+  const [connected, setConnected] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/shop-dashboard/my-shop")
+      .then((r) => r.json())
+      .then((d) => {
+        setConnected(!!d.shop);
+        setShopName(d.shop?.shop_name ?? null);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -51,7 +55,16 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
             </div>
             <div>
               <p className="text-sm font-bold text-gray-900 leading-none">EzTread</p>
-              <p className="text-xs text-blue-600 font-semibold mt-0.5">Shop Owner</p>
+              {connected ? (
+                <p className="text-xs text-blue-600 font-semibold mt-0.5 max-w-[140px] truncate" title={shopName ?? ""}>
+                  {shopName ?? "My Shop"}
+                </p>
+              ) : (
+                <p className="text-xs text-amber-500 font-semibold mt-0.5 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+                  Pending
+                </p>
+              )}
             </div>
           </Link>
         </div>
@@ -59,10 +72,7 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1">
           {NAV.map((item) => {
-            const active =
-              item.href === "/shop-dashboard"
-                ? pathname === "/shop-dashboard"
-                : pathname.startsWith(item.href);
+            const active = pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
@@ -100,11 +110,7 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
       <div className="ml-64 flex-1 flex flex-col min-h-screen">
         <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
           <h1 className="text-lg font-semibold text-gray-900">
-            {NAV.find((n) =>
-              n.href === "/shop-dashboard"
-                ? pathname === "/shop-dashboard"
-                : pathname.startsWith(n.href)
-            )?.label ?? "Shop Dashboard"}
+            {NAV.find((n) => pathname.startsWith(n.href))?.label ?? "Shop Dashboard"}
           </h1>
         </header>
 

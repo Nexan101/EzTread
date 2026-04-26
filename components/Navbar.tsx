@@ -9,30 +9,43 @@ import { supabase } from "@/lib/supabase";
 export default function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  async function fetchRole() {
+    try {
+      const res = await fetch("/api/auth/role");
+      const data = await res.json();
+      setRole(data.role ?? null);
+    } catch {
+      setRole(null);
+    }
+  }
+
   useEffect(() => {
-    // Get initial session
     const timeout = setTimeout(() => setLoading(false), 3000);
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
       setLoading(false);
       clearTimeout(timeout);
+      if (data.user) fetchRole();
     }).catch(() => {
       setLoading(false);
       clearTimeout(timeout);
     });
 
-    // Listen for auth changes (sign in / sign out)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) fetchRole();
+      else setRole(null);
     });
 
     return () => subscription.unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -70,6 +83,7 @@ export default function Navbar() {
   const initials = displayName
     ? displayName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
     : user?.email?.[0]?.toUpperCase() ?? "?";
+  const isShopOwner = role === "shop_owner" || role === "admin";
 
   return (
     <header
@@ -112,6 +126,18 @@ export default function Navbar() {
               <div className="w-8 h-8 rounded-full bg-[#f5f5f7] animate-pulse" />
             ) : user ? (
               /* ── Logged-in user menu ── */
+              <div className="flex items-center gap-2">
+                {isShopOwner && (
+                  <Link
+                    href="/shop-dashboard"
+                    className="flex items-center gap-1.5 text-[13px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-colors duration-200"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    My Dashboard
+                  </Link>
+                )}
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen((v) => !v)}
@@ -180,6 +206,7 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
+              </div>
             ) : (
               /* ── Guest buttons ── */
               <>
@@ -245,6 +272,18 @@ export default function Navbar() {
                       <p className="text-xs text-[#6e6e73] truncate">{user.email}</p>
                     </div>
                   </div>
+                  {isShopOwner && (
+                    <Link
+                      href="/shop-dashboard"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center justify-center gap-2 w-full text-blue-600 font-semibold py-3 rounded-2xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-[15px] transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      My Dashboard
+                    </Link>
+                  )}
                   <button
                     onClick={handleSignOut}
                     className="block w-full text-center text-red-500 font-semibold py-3 rounded-2xl border border-red-100 hover:bg-red-50 text-[15px] transition-colors"

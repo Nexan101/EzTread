@@ -1,128 +1,105 @@
-import Link from "next/link";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import type { Metadata } from "next";
+import LegalLayout from "@/components/LegalLayout";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | EzTread",
-  description: "Terms and conditions for using the EzTread tire price comparison service.",
+  title: "Terms of Use — EzTread",
+  description: "EzTread's general terms of use for all platform users.",
 };
-
-const LAST_UPDATED = "April 2026";
 
 export default function TermsPage() {
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen bg-[#f5f5f7] pt-14">
-        <div className="max-w-3xl mx-auto px-5 sm:px-8 py-16">
-          <p className="text-xs font-semibold tracking-widest uppercase text-[#6e6e73] mb-3">Legal</p>
-          <h1 className="text-3xl sm:text-4xl font-bold text-[#1d1d1f] tracking-tight mb-2">Terms of Service</h1>
-          <p className="text-sm text-[#6e6e73] mb-12">Last updated: {LAST_UPDATED}</p>
+    <LegalLayout title="Terms of Use" lastUpdated="April 26, 2025">
+      <p>
+        Welcome to EzTread. By accessing or using our platform, you agree to these Terms of Use.
+        If you are a shop owner, additional terms in our{" "}
+        <a href="/terms/shop-owners">Shop Owner Terms of Service</a> also apply.
+      </p>
 
-          <div className="space-y-10 text-[15px] text-[#3a3a3c] leading-relaxed">
+      <hr />
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">1. Acceptance of Terms</h2>
-              <p>
-                By accessing or using EzTread (&ldquo;the Service&rdquo;), you agree to be bound by these Terms of Service. If you do not agree, please do not use the Service.
-              </p>
-            </section>
+      <h2>1. Platform Description</h2>
+      <p>
+        EzTread is a tire price comparison platform that allows consumers to compare tire and
+        installation costs from local shops. We do not sell tires or perform installation services.
+        We are a marketplace connecting consumers with independent tire businesses.
+      </p>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">2. Description of Service</h2>
-              <p>
-                EzTread is a tire price comparison tool that helps consumers find and compare tire prices from major retailers and locate nearby tire installation shops. Tire prices displayed are sourced from third-party retailers via automated web search and may not reflect current or accurate pricing.
-              </p>
-            </section>
+      <h2>2. User Accounts</h2>
+      <ul>
+        <li>You must be 18 or older to create an account</li>
+        <li>You are responsible for maintaining the security of your account credentials</li>
+        <li>You may not share account access with others</li>
+        <li>You must provide accurate information when creating an account</li>
+        <li>We may suspend accounts that violate these terms</li>
+      </ul>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">3. Price Information Disclaimer</h2>
-              <p>
-                <strong>Prices shown on EzTread are for informational purposes only.</strong> We use AI-powered web search to retrieve pricing from third-party retailer websites. This information:
-              </p>
-              <ul className="list-disc pl-5 space-y-1 mt-2">
-                <li>May be outdated, incomplete, or inaccurate</li>
-                <li>Does not constitute a binding offer or guarantee of availability</li>
-                <li>May differ from prices at checkout on retailer websites</li>
-                <li>Should be independently verified before making any purchase decision</li>
-              </ul>
-              <p className="mt-3">
-                EzTread is not affiliated with Walmart, Sam&rsquo;s Club, Costco, Discount Tire, or any other retailer listed.
-              </p>
-            </section>
+      <h2>3. Acceptable Use</h2>
+      <p>You agree to use EzTread only for lawful purposes and in accordance with our{" "}
+        <a href="/acceptable-use">Acceptable Use Policy</a>. You may not use EzTread to:
+      </p>
+      <ul>
+        <li>Violate any applicable laws or regulations</li>
+        <li>Submit false or misleading information</li>
+        <li>Harass or harm other users</li>
+        <li>Attempt to gain unauthorized access to our systems</li>
+        <li>Scrape or harvest data without permission</li>
+      </ul>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">4. User Accounts</h2>
-              <p>
-                You are responsible for maintaining the confidentiality of your account credentials. You agree to notify us immediately of any unauthorized use of your account. We reserve the right to suspend or terminate accounts that violate these terms.
-              </p>
-            </section>
+      <h2>4. Content Standards</h2>
+      <p>User-submitted content must be:</p>
+      <ul>
+        <li>Accurate and not misleading</li>
+        <li>Free of illegal, obscene, or defamatory material</li>
+        <li>Owned by you or used with permission</li>
+        <li>Relevant to the platform's purpose</li>
+      </ul>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">5. Acceptable Use</h2>
-              <p>You agree not to:</p>
-              <ul className="list-disc pl-5 space-y-1 mt-2">
-                <li>Use the Service for any unlawful purpose</li>
-                <li>Attempt to overload, disrupt, or gain unauthorized access to our systems</li>
-                <li>Scrape, crawl, or systematically extract data from the Service</li>
-                <li>Use automated scripts to make excessive requests to our APIs</li>
-                <li>Misrepresent your identity or affiliation</li>
-              </ul>
-            </section>
+      <h2>5. Intellectual Property</h2>
+      <p>
+        The EzTread platform, design, logo, and software are owned by EzTread and protected by
+        copyright and trademark law. You may not copy, modify, or distribute our platform code
+        or design without written permission. See our <a href="/dmca">DMCA Policy</a> for
+        copyright infringement procedures.
+      </p>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">6. Intellectual Property</h2>
-              <p>
-                The EzTread name, logo, and website design are owned by EzTread. Tire pricing data is sourced from third-party retailers and is their respective property. You may not reproduce or distribute our proprietary content without written permission.
-              </p>
-            </section>
+      <h2>6. Limitation of Liability</h2>
+      <p>
+        EzTread is provided "as is" without warranties of any kind. We are not liable for:
+      </p>
+      <ul>
+        <li>Inaccuracies in shop listings</li>
+        <li>Service quality or outcomes from listed shops</li>
+        <li>Any indirect, incidental, or consequential damages</li>
+        <li>Platform downtime or data loss</li>
+      </ul>
+      <p>See our full <a href="/disclaimer">Disclaimer</a> for more details.</p>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">7. Limitation of Liability</h2>
-              <p>
-                To the maximum extent permitted by law, EzTread shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the Service, including reliance on any pricing information displayed. Your sole remedy for dissatisfaction with the Service is to stop using it.
-              </p>
-            </section>
+      <h2>7. Dispute Resolution</h2>
+      <p>
+        Any disputes between you and EzTread will be governed by the laws of Texas, USA.
+        Before filing any legal claim, you agree to contact us at{" "}
+        <a href="mailto:EzTread@eztread.net">EzTread@eztread.net</a> to attempt informal resolution.
+      </p>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">8. Disclaimer of Warranties</h2>
-              <p>
-                The Service is provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo; without warranties of any kind, express or implied, including warranties of merchantability, fitness for a particular purpose, or accuracy of information.
-              </p>
-            </section>
+      <h2>8. Changes to Terms</h2>
+      <p>
+        We may update these terms at any time. We'll notify registered users of material changes
+        by email. Continued use of EzTread after changes constitutes acceptance of the new terms.
+      </p>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">9. Changes to Terms</h2>
-              <p>
-                We may modify these terms at any time. The date at the top of this page reflects the most recent revision. Continued use of the Service after changes constitutes your acceptance of the updated terms.
-              </p>
-            </section>
+      <h2>9. Other Policies</h2>
+      <ul>
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms/shop-owners">Shop Owner Terms</a></li>
+        <li><a href="/acceptable-use">Acceptable Use Policy</a></li>
+        <li><a href="/dmca">DMCA & Copyright Policy</a></li>
+        <li><a href="/disclaimer">Disclaimer</a></li>
+      </ul>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">10. Governing Law</h2>
-              <p>
-                These terms are governed by the laws of the State of Texas, without regard to conflict of law principles.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">11. Contact</h2>
-              <p>
-                Questions about these terms? Contact us at{" "}
-                <a href="mailto:legal@eztread.com" className="text-[#f97316] hover:underline">legal@eztread.com</a>.
-              </p>
-            </section>
-          </div>
-
-          <div className="mt-12 pt-8 border-t border-[#e5e5ea]">
-            <Link href="/" className="text-sm font-medium text-[#f97316] hover:text-[#ea6b0f] transition-colors">
-              ← Back to EzTread
-            </Link>
-          </div>
-        </div>
-      </main>
-      <Footer />
-    </>
+      <h2>10. Contact</h2>
+      <p>
+        Questions about these terms? Email <a href="mailto:EzTread@eztread.net">EzTread@eztread.net</a>
+      </p>
+    </LegalLayout>
   );
 }

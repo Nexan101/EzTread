@@ -1,123 +1,133 @@
-import Link from "next/link";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import type { Metadata } from "next";
+import LegalLayout from "@/components/LegalLayout";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | EzTread",
-  description: "How EzTread collects, uses, and protects your information.",
+  title: "Privacy Policy — EzTread",
+  description: "How EzTread collects, uses, and protects your personal information.",
 };
-
-const LAST_UPDATED = "April 2026";
 
 export default function PrivacyPage() {
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen bg-[#f5f5f7] pt-14">
-        <div className="max-w-3xl mx-auto px-5 sm:px-8 py-16">
-          <p className="text-xs font-semibold tracking-widest uppercase text-[#6e6e73] mb-3">Legal</p>
-          <h1 className="text-3xl sm:text-4xl font-bold text-[#1d1d1f] tracking-tight mb-2">Privacy Policy</h1>
-          <p className="text-sm text-[#6e6e73] mb-12">Last updated: {LAST_UPDATED}</p>
+    <LegalLayout title="Privacy Policy" lastUpdated="April 26, 2025">
+      <p>
+        Your privacy matters to us. This Privacy Policy explains how EzTread ("we," "us," "our")
+        collects, uses, and shares information when you use our platform.
+      </p>
 
-          <div className="prose prose-gray max-w-none space-y-10 text-[15px] text-[#3a3a3c] leading-relaxed">
+      <hr />
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">1. Who We Are</h2>
-              <p>
-                EzTread (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) operates the EzTread website and tire price comparison service. This policy explains what information we collect when you use our service and how we use it.
-              </p>
-            </section>
+      <h2>1. Information We Collect</h2>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">2. Information We Collect</h2>
-              <h3 className="text-base font-semibold text-[#1d1d1f] mb-2">Information you provide</h3>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Email address and password when you create an account</li>
-                <li>Tire size, brand preference, and zip code when you search for prices</li>
-                <li>Contact information if you submit a quote request</li>
-              </ul>
-              <h3 className="text-base font-semibold text-[#1d1d1f] mt-4 mb-2">Information collected automatically</h3>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>
-                  <strong>Location data:</strong> If you grant permission, we use your browser&rsquo;s geolocation API to determine your approximate location. Your coordinates are temporarily stored in your browser&rsquo;s localStorage (up to 24 hours) to avoid repeated location requests. Your location is sent to Google Maps APIs to find nearby tire shops; it is not stored on our servers.
-                </li>
-                <li>Standard web server logs (IP address, browser type, pages visited) for security and debugging.</li>
-              </ul>
-            </section>
+      <h3>From Shop Owners</h3>
+      <ul>
+        <li>Business name, address, phone number, email, and website</li>
+        <li>Pricing and service information</li>
+        <li>Business hours and specialties</li>
+        <li>IP address and user agent at signup (for terms acceptance logging)</li>
+      </ul>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">3. How We Use Your Information</h2>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>To provide the tire price comparison and local shop search features</li>
-                <li>To authenticate your account and maintain your session</li>
-                <li>To find tire shops near you using Google Maps</li>
-                <li>To search for tire prices using OpenAI&rsquo;s web search capability</li>
-                <li>To improve our service and diagnose technical issues</li>
-              </ul>
-            </section>
+      <h3>From Customers</h3>
+      <ul>
+        <li>Tire size and vehicle information submitted in search queries</li>
+        <li>General location (city/ZIP) for local shop matching</li>
+        <li>Anonymous usage data (pages visited, clicks, search terms)</li>
+      </ul>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">4. Third-Party Services</h2>
-              <p>We use the following third-party services that may process your data:</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2">
-                <li>
-                  <strong>Supabase</strong> — Authentication and database hosting. Your account credentials are stored securely via Supabase. See <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer" className="text-[#f97316] hover:underline">Supabase Privacy Policy</a>.
-                </li>
-                <li>
-                  <strong>Google Maps Platform</strong> — Location geocoding and local business search. Your location data is sent to Google to find nearby tire shops. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-[#f97316] hover:underline">Google Privacy Policy</a>.
-                </li>
-                <li>
-                  <strong>OpenAI</strong> — Tire price search. Your tire size and zip code are sent to OpenAI to search the web for prices. See <a href="https://openai.com/policies/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[#f97316] hover:underline">OpenAI Privacy Policy</a>.
-                </li>
-              </ul>
-            </section>
+      <h3>Automatically Collected</h3>
+      <ul>
+        <li>IP address (hashed for privacy)</li>
+        <li>Browser type and version</li>
+        <li>Referring URLs and navigation patterns</li>
+        <li>Session cookies and preferences</li>
+      </ul>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">5. Data Retention</h2>
-              <p>
-                Account data is retained until you delete your account. Location data is not stored on our servers. Browser localStorage data (coordinates) expires within 24 hours and can be cleared by you at any time through your browser settings.
-              </p>
-            </section>
+      <h2>2. How We Use Your Data</h2>
+      <ul>
+        <li><strong>Shop data:</strong> Displayed publicly on EzTread for comparison and search</li>
+        <li><strong>Customer searches:</strong> Used to generate price comparisons and match local shops</li>
+        <li><strong>Analytics:</strong> Aggregate, anonymized data to improve platform performance</li>
+        <li><strong>Communications:</strong> Account notifications, verification emails, support responses</li>
+        <li><strong>Legal compliance:</strong> Terms acceptance logging, fraud prevention</li>
+      </ul>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">6. Your Rights</h2>
-              <p>
-                You may request deletion of your account and associated data at any time by contacting us. You can revoke location permission through your browser settings at any time.
-              </p>
-            </section>
+      <h2>3. Information Sharing</h2>
+      <ul>
+        <li><strong>Shop profiles are public</strong> — visible to all internet users, including competitors</li>
+        <li>Customer search data may be shared with the shops whose results are returned</li>
+        <li>We do not sell personal data to third parties</li>
+        <li>We may share data with service providers (hosting, email, analytics) under strict confidentiality agreements</li>
+        <li>We may disclose data when required by law or to protect our rights</li>
+      </ul>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">7. Children&rsquo;s Privacy</h2>
-              <p>
-                Our service is not directed to children under 13. We do not knowingly collect personal information from children under 13.
-              </p>
-            </section>
+      <h2>4. No Data Selling</h2>
+      <p>
+        We do not sell, rent, or trade your personal information to any third party for their
+        marketing purposes. Period.
+      </p>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">8. Changes to This Policy</h2>
-              <p>
-                We may update this policy from time to time. The date at the top of this page reflects the most recent revision. Continued use of EzTread after changes constitutes acceptance of the updated policy.
-              </p>
-            </section>
+      <h2>5. Cookies</h2>
+      <ul>
+        <li><strong>Session cookies:</strong> Keep you logged in during your visit</li>
+        <li><strong>Preference cookies:</strong> Remember your search settings and location</li>
+        <li><strong>Analytics cookies:</strong> Anonymous tracking of platform usage (no personal identification)</li>
+      </ul>
+      <p>You can disable cookies in your browser settings, though some features may not work correctly.</p>
 
-            <section>
-              <h2 className="text-xl font-bold text-[#1d1d1f] mb-3">9. Contact Us</h2>
-              <p>
-                If you have questions about this privacy policy, please contact us at{" "}
-                <a href="mailto:privacy@eztread.com" className="text-[#f97316] hover:underline">privacy@eztread.com</a>.
-              </p>
-            </section>
-          </div>
+      <h2>6. Your Rights</h2>
+      <p>You have the right to:</p>
+      <ul>
+        <li><strong>Access:</strong> Request a copy of the data we hold about you</li>
+        <li><strong>Update:</strong> Correct inaccurate information through your dashboard</li>
+        <li><strong>Delete:</strong> Request deletion of your account and associated data</li>
+        <li><strong>Export:</strong> Request a machine-readable copy of your data</li>
+        <li><strong>Opt-out:</strong> Unsubscribe from marketing emails at any time</li>
+      </ul>
+      <p>To exercise these rights, email <a href="mailto:EzTread@eztread.net">EzTread@eztread.net</a>.</p>
 
-          <div className="mt-12 pt-8 border-t border-[#e5e5ea]">
-            <Link href="/" className="text-sm font-medium text-[#f97316] hover:text-[#ea6b0f] transition-colors">
-              ← Back to EzTread
-            </Link>
-          </div>
-        </div>
-      </main>
-      <Footer />
-    </>
+      <h2>7. CCPA (California Residents)</h2>
+      <p>California residents have additional rights under the California Consumer Privacy Act:</p>
+      <ul>
+        <li>Right to know what personal information we collect and why</li>
+        <li>Right to delete personal information</li>
+        <li>Right to opt out of the sale of personal information (we do not sell data)</li>
+        <li>Right to non-discrimination for exercising privacy rights</li>
+      </ul>
+
+      <h2>8. GDPR (EU Residents)</h2>
+      <p>If you are in the European Union, you have rights under the GDPR including:</p>
+      <ul>
+        <li>Right to access, rectification, and erasure</li>
+        <li>Right to data portability</li>
+        <li>Right to restrict or object to processing</li>
+        <li>Right to lodge a complaint with your local supervisory authority</li>
+      </ul>
+      <p>Our legal basis for processing shop owner data is contractual necessity and legitimate interest.</p>
+
+      <h2>9. Security</h2>
+      <ul>
+        <li>All data is transmitted over SSL/TLS encryption</li>
+        <li>Passwords are hashed and never stored in plain text</li>
+        <li>IP addresses are hashed before storage</li>
+        <li>We conduct regular security reviews of our infrastructure</li>
+      </ul>
+
+      <h2>10. Children's Privacy</h2>
+      <p>
+        EzTread is not intended for children under 13. We do not knowingly collect personal
+        information from children. If you believe a child has provided us information, contact us
+        immediately at <a href="mailto:EzTread@eztread.net">EzTread@eztread.net</a>.
+      </p>
+
+      <h2>11. Policy Updates</h2>
+      <p>
+        We may update this Privacy Policy periodically. We will notify registered users of material
+        changes by email. The "Last updated" date at the top reflects the most recent revision.
+      </p>
+
+      <h2>12. Contact</h2>
+      <p>
+        Privacy questions or requests: <a href="mailto:EzTread@eztread.net">EzTread@eztread.net</a>
+      </p>
+    </LegalLayout>
   );
 }

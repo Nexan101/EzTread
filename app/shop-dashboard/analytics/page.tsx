@@ -77,8 +77,17 @@ export default function AnalyticsPage() {
   const [series, setSeries] = useState<SeriesPoint[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPremium, setIsPremium] = useState(false);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // Check premium status once on mount
+  useEffect(() => {
+    fetch("/api/shop-dashboard/my-shop")
+      .then((r) => r.json())
+      .then((d) => setIsPremium(!!d.isPremium))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -149,100 +158,127 @@ export default function AnalyticsPage() {
         ))}
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard
-          label="Total Views"
-          value={summary?.totalImpressions.toLocaleString() ?? "—"}
-          sub="Times shown in listings"
-          color="text-blue-600"
-        />
-        <StatCard
-          label="Directions Clicks"
-          value={summary?.totalDirectionsClicks.toLocaleString() ?? "—"}
-          sub="Customers asked for directions"
-          color="text-orange-500"
-        />
-        <StatCard
-          label="Conversion Rate"
-          value={
-            summary
-              ? `${summary.totalImpressions > 0 ? Math.round((summary.totalDirectionsClicks / summary.totalImpressions) * 1000) / 10 : 0}%`
-              : "—"
-          }
-          sub="Directions ÷ Views"
-          color="text-green-600"
-        />
-      </div>
+      {/* All analytics content — blurred for free plan */}
+      <div className="relative">
 
-      {/* Chart */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="font-semibold text-gray-900">
-            {period === "daily" ? "Last 30 Days" :
-             period === "weekly" ? "Last 12 Weeks" :
-             period === "monthly" ? "Last 12 Months" : "Yearly Overview"}
-          </h2>
-          {lastUpdated && (
-            <p className="text-xs text-gray-400">
-              Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </p>
+        {/* Blur + lock overlay for non-premium */}
+        {!isPremium && (
+          <div className="absolute inset-0 z-10 rounded-2xl overflow-hidden flex flex-col items-center justify-center text-center px-8" style={{ backdropFilter: "blur(8px)", background: "rgba(255,255,255,0.5)" }}>
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-xl px-8 py-8 max-w-sm">
+              <div className="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 h-7 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <p className="text-lg font-bold text-gray-900 mb-2">Premium Feature</p>
+              <p className="text-sm text-gray-500 leading-relaxed mb-5">
+                Upgrade to Premium to unlock full analytics — views, direction clicks, conversion rates, and performance trends.
+              </p>
+              <a
+                href="/join"
+                className="block w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-3 rounded-xl transition-colors text-center"
+              >
+                Upgrade to Premium — $149/mo →
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Summary cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <StatCard
+            label="Total Views"
+            value={summary?.totalImpressions.toLocaleString() ?? "—"}
+            sub="Times shown in listings"
+            color="text-blue-600"
+          />
+          <StatCard
+            label="Directions Clicks"
+            value={summary?.totalDirectionsClicks.toLocaleString() ?? "—"}
+            sub="Customers asked for directions"
+            color="text-orange-500"
+          />
+          <StatCard
+            label="Conversion Rate"
+            value={
+              summary
+                ? `${summary.totalImpressions > 0 ? Math.round((summary.totalDirectionsClicks / summary.totalImpressions) * 1000) / 10 : 0}%`
+                : "—"
+            }
+            sub="Directions ÷ Views"
+            color="text-green-600"
+          />
+        </div>
+
+        {/* Chart */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-semibold text-gray-900">
+              {period === "daily" ? "Last 30 Days" :
+               period === "weekly" ? "Last 12 Weeks" :
+               period === "monthly" ? "Last 12 Months" : "Yearly Overview"}
+            </h2>
+            {lastUpdated && (
+              <p className="text-xs text-gray-400">
+                Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </p>
+            )}
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-sm text-red-500">{error}</p>
+            </div>
+          ) : chartData.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <p className="text-sm text-gray-500 font-medium">No data yet for this period.</p>
+              <p className="text-xs text-gray-400 mt-1">Data appears once customers find your shop in listings.</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 12, fill: "#6e6e73" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 12, fill: "#6e6e73" }}
+                  axisLine={false}
+                  tickLine={false}
+                  allowDecimals={false}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend
+                  wrapperStyle={{ fontSize: "13px", paddingTop: "16px" }}
+                  formatter={(value) => <span style={{ color: "#1d1d1f", fontWeight: 600 }}>{value}</span>}
+                />
+                <Bar dataKey="Impressions" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Line
+                  type="monotone"
+                  dataKey="Directions"
+                  stroke="#f97316"
+                  strokeWidth={2.5}
+                  dot={{ fill: "#f97316", r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
           )}
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : error ? (
-          <div className="flex items-center justify-center h-64">
-            <p className="text-sm text-red-500">{error}</p>
-          </div>
-        ) : chartData.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <p className="text-sm text-gray-500 font-medium">No data yet for this period.</p>
-            <p className="text-xs text-gray-400 mt-1">Data appears once customers find your shop in listings.</p>
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize: 12, fill: "#6e6e73" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 12, fill: "#6e6e73" }}
-                axisLine={false}
-                tickLine={false}
-                allowDecimals={false}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend
-                wrapperStyle={{ fontSize: "13px", paddingTop: "16px" }}
-                formatter={(value) => <span style={{ color: "#1d1d1f", fontWeight: 600 }}>{value}</span>}
-              />
-              <Bar dataKey="Impressions" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={40} />
-              <Line
-                type="monotone"
-                dataKey="Directions"
-                stroke="#f97316"
-                strokeWidth={2.5}
-                dot={{ fill: "#f97316", r: 3 }}
-                activeDot={{ r: 5 }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        )}
       </div>
-
     </div>
   );
 }

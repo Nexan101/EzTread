@@ -51,6 +51,7 @@ export default function PricingPage() {
   const [balancing, setBalancing] = useState("");
 
   const [loading, setLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
@@ -61,18 +62,26 @@ export default function PricingPage() {
   }
 
   useEffect(() => {
-    fetch("/api/shop-dashboard/pricing")
+    // First check if the shop is connected/verified
+    fetch("/api/shop-dashboard/my-shop")
       .then((r) => r.json())
       .then((d) => {
-        if (d.error) { setError(d.error); return; }
-        if (d.pricing) {
-          const p: Pricing = d.pricing;
-          setShopName(p.shop_name ?? "");
-          setInstallation(p.installation ?? "");
-          setAlignment(p.alignment ?? "");
-          setRotation(p.rotation ?? "");
-          setBalancing(p.balancing ?? "");
-        }
+        if (!d.isConnected) { setLoading(false); return; }
+        setIsConnected(true);
+        // Now load pricing
+        return fetch("/api/shop-dashboard/pricing")
+          .then((r) => r.json())
+          .then((d) => {
+            if (d.error) { setError(d.error); return; }
+            if (d.pricing) {
+              const p: Pricing = d.pricing;
+              setShopName(p.shop_name ?? "");
+              setInstallation(p.installation ?? "");
+              setAlignment(p.alignment ?? "");
+              setRotation(p.rotation ?? "");
+              setBalancing(p.balancing ?? "");
+            }
+          });
       })
       .catch(() => setError("Failed to load pricing."))
       .finally(() => setLoading(false));
@@ -108,6 +117,25 @@ export default function PricingPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isConnected) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 text-center max-w-md mx-auto">
+        <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-5">
+          <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Pending Admin Approval</h2>
+        <p className="text-sm text-gray-500 leading-relaxed mb-4">
+          Your shop profile is under review. Once our team verifies your business, pricing controls will unlock here — usually within <strong>1–2 business days</strong>.
+        </p>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 text-sm text-amber-700">
+          Questions? Email <a href="mailto:EzTread@eztread.net" className="underline font-medium">EzTread@eztread.net</a>
+        </div>
       </div>
     );
   }

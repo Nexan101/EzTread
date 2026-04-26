@@ -23,11 +23,20 @@ export async function GET() {
       LIMIT 1
     `;
 
-    if (!claim) {
-      return NextResponse.json({ shop: null });
-    }
+    // Check if user has an active premium plan signup
+    const [premiumRow] = await sql`
+      SELECT id FROM plan_signups
+      WHERE LOWER(email) = LOWER(${user.email})
+        AND plan = 'premium'
+        AND status = 'active'
+      LIMIT 1
+    `;
 
-    return NextResponse.json({ shop: claim });
+    return NextResponse.json({
+      shop:        claim ?? null,
+      isConnected: !!claim,
+      isPremium:   !!premiumRow,
+    });
   } catch (err) {
     console.error("[GET /api/shop-dashboard/my-shop]", err);
     return NextResponse.json({ error: String(err) }, { status: 500 });

@@ -1,0 +1,13 @@
+Add plan signups, email system, access control, and shop dashboard improvements
+
+- Activate proxy.ts middleware to guard /admin and /shop-dashboard routes
+- Lock admin to ADMIN_EMAILS only; premium checkout grants shop_owner role via Stripe webhook
+- Add plan_signups and email_logs tables with setup-db migration
+- Upgrade email templates (rich HTML confirmation + admin notification) via Resend
+- Replace all old email addresses with EzTread@eztread.net
+- Add /admin/signups page with plan/status filters and CSV export
+- Shop dashboard sidebar shows connected shop name or Pending
+- Pricing page blocked until admin verifies shop via shop_claims
+- Analytics fully blurred for free plan users; premium only
+- Add My Dashboard button in navbar for shop_owner and admin roles
+- Redirect /shop-dashboard root to analytics page

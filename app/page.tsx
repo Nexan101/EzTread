@@ -21,18 +21,17 @@ import ShopCTA from "@/components/ShopCTA";
 import SocialProof from "@/components/SocialProof";
 import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
+import PageTracker from "@/components/PageTracker";
 
 export default function Home() {
   return (
     <>
       <Navbar />
+      <PageTracker />
 
       <main>
         {/* 1. Hero — above-the-fold hook with headline + CTA */}
         <HeroSection />
-
-        {/* 2. Value Propositions — why TireHub, 3 key benefits */}
-        <ValueProps />
 
         {/* 3. How It Works — 3-step process to reduce friction */}
         <HowItWorks />
@@ -46,8 +45,6 @@ export default function Home() {
         {/* 6. Shop Owner CTA — B2B conversion section */}
         <ShopCTA />
 
-        {/* 7. Final CTA — last chance conversion before footer */}
-        <FinalCTA />
       </main>
 
       <Footer />
