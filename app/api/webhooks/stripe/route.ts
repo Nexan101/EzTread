@@ -98,12 +98,15 @@ export async function POST(req: NextRequest) {
         // Revoke shop_owner role
         const shopIdForUser = sub.metadata?.shop_id;
         if (!shopIdForUser) break;
-        const { data: shopRow } = await supabaseAdmin
-          .from("shops")
-          .select("email")
-          .eq("id", shopIdForUser)
-          .single()
-          .catch(() => ({ data: null }));
+        let shopRow: { email: string } | null = null;
+        try {
+          const { data } = await supabaseAdmin
+            .from("shops")
+            .select("email")
+            .eq("id", shopIdForUser)
+            .single();
+          shopRow = data;
+        } catch { shopRow = null; }
         if (shopRow?.email) {
           const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
           const match = users.find(u => u.email?.toLowerCase() === shopRow.email.toLowerCase());
