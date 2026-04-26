@@ -29,11 +29,11 @@ const SignupSchema = z.object({
   hours:          z.string().optional(),
   extra_services: z.array(z.string()).optional(),
 
-  ack_public:       z.literal(true, { errorMap: () => ({ message: "Required" }) }),
-  ack_accurate:     z.literal(true, { errorMap: () => ({ message: "Required" }) }),
-  ack_terms:        z.literal(true, { errorMap: () => ({ message: "Required" }) }),
-  ack_privacy:      z.literal(true, { errorMap: () => ({ message: "Required" }) }),
-  ack_authorized:   z.literal(true, { errorMap: () => ({ message: "Required" }) }),
+  ack_public:       z.literal(true, "Required"),
+  ack_accurate:     z.literal(true, "Required"),
+  ack_terms:        z.literal(true, "Required"),
+  ack_privacy:      z.literal(true, "Required"),
+  ack_authorized:   z.literal(true, "Required"),
 });
 
 export async function POST(req: NextRequest) {
