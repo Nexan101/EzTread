@@ -803,7 +803,7 @@ export default function SearchWidget() {
               ) : filteredShops.length === 0 ? (
                 <div className="bg-white rounded-3xl border border-[#d2d2d7] px-10 py-14 text-center shadow-sm">
                   <p className="text-xl font-bold text-[#1d1d1f] mb-2">No shops match your filters</p>
-                  <button onClick={() => { setFilterOpenNow(false); setFilterVerified(false); setFilterMinRating(0); setFilterMaxInstall(0); setShopSearch(""); }} className="text-sm font-semibold text-[#f97316] hover:text-[#ea6b0f] transition-colors">Clear all filters</button>
+                  <button onClick={() => { setFilterOpenNow(false); setFilterVerified(false); setFilterMinRating(0); setFilterSortServices(new Set()); setFilterPriceSort("asc"); setFilterMaxMiles(15); }} className="text-sm font-semibold text-[#f97316] hover:text-[#ea6b0f] transition-colors">Clear all filters</button>
                 </div>
               ) : (
                 <>
