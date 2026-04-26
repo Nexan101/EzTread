@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
       balancing:    data.balancing || null,
       alignment:    data.alignment || null,
       rotation:     data.rotation || null,
-    }).then(() => {}).catch(e => console.warn("labor estimates insert failed:", e));
+    }).then(() => {}, e => console.warn("labor estimates insert failed:", e));
 
     // Create shop_tire_ranges (skip if not provided)
     // (tire ranges removed from signup flow)
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
         hours:          data.hours,
         extra_services: data.extra_services,
       },
-    }).throwOnError().then(() => {}).catch(e => console.warn("terms log failed:", e));
+    }).throwOnError().then(() => {}, e => console.warn("terms log failed:", e));
 
     // Record plan signup
     await supabaseAdmin.from("plan_signups").insert({
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
       city:      data.city,
       state:     data.state,
       status:    "active",
-    }).then(() => {}).catch(e => console.warn("plan_signups insert failed:", e));
+    }).then(() => {}, e => console.warn("plan_signups insert failed:", e));
 
     // Send emails (non-blocking) — full details for rich template
     Promise.allSettled([

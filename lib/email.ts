@@ -27,7 +27,7 @@ async function logEmail(params: {
     error_message: params.error ?? null,
     email_service: "resend",
     metadata:      params.metadata ?? null,
-  }).then(() => {}).catch(e => console.warn("[email_logs] insert failed:", e));
+  }).then(() => {}, e => console.warn("[email_logs] insert failed:", e));
 }
 
 // ─── Shop signup confirmation (sent to shop owner) ─────────────────────────────

@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
           stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
           amount_cents:       session.amount_total ?? null,
           status:             "active",
-        }).then(() => {}).catch(e => console.warn("[Stripe Webhook] plan_signups insert failed:", e));
+        }).then(() => {}, e => console.warn("[Stripe Webhook] plan_signups insert failed:", e));
 
         // Grant shop_owner role so the user can access /shop-dashboard
         const userId = session.metadata?.user_id;
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
           .update({ status: "canceled" })
           .eq("stripe_customer_id", typeof sub.customer === "string" ? sub.customer : "")
           .eq("plan", "premium")
-          .then(() => {}).catch(e => console.warn("[Stripe Webhook] plan_signups cancel failed:", e));
+          .then(() => {}, e => console.warn("[Stripe Webhook] plan_signups cancel failed:", e));
 
         // Revoke shop_owner role
         const shopIdForUser = sub.metadata?.shop_id;
